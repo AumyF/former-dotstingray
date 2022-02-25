@@ -1,8 +1,5 @@
-module Main where
+module Main (main) where
 
-import qualified MyLib (someFunc)
+import qualified Cli (main)
 
-main :: IO ()
-main = do
-  putStrLn "Hello, Haskell!"
-  MyLib.someFunc
+main = Cli.main
