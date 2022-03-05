@@ -1,0 +1,7 @@
+[shell]
+disabled = false
+bash_indicator = "bash"
+fish_indicator = "fish"
+
+[container]
+disabled = true

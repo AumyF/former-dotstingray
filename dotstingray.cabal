@@ -23,13 +23,16 @@ library
   exposed-modules:  Cli
 
   -- Modules included in this library but not exported.
-  -- other-modules:
+  other-modules:    Args
 
   -- LANGUAGE extensions used by modules in this package.
   -- other-extensions:
   build-depends:
-    , base     ^>=4.14.3.0
+    , base                  ^>=4.14.3.0
     , dhall
+    , directory
+    , filepath
+    , optparse-applicative
     , process
     , text
     , vector

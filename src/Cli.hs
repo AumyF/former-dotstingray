@@ -4,30 +4,33 @@
 
 module Cli (main) where
 
-import Data.Text (unpack)
+import Args (Args (Args), parseArgs)
+import Data.Text (pack, unpack)
 import Data.Vector (Vector, toList)
 import Dhall
 import GHC.IO.Handle (Handle, hFlush)
-import System.Exit (exitSuccess)
-import System.IO (stdout)
-import System.Process
+import System.Exit (ExitCode (ExitFailure), die, exitFailure, exitSuccess)
+import System.FilePath.Posix (takeDirectory)
+import System.IO (hPutStrLn, stderr, stdout)
+import System.Process (ProcessHandle, createProcess, shell)
 
 newtype Cmd = Cmd {cmd :: String} deriving (Generic, Show)
 
-instance FromDhall Cmd
+newtype Recipe = Recipe
+  { commands :: Vector Text
+  }
+  deriving (Show, Generic)
 
-runCmd :: Cmd -> IO (Maybe Handle, Maybe Handle, Maybe Handle, ProcessHandle)
-runCmd Cmd {cmd} = do
-  createProcess $ shell cmd
+instance FromDhall Recipe
 
-showCmd :: Cmd -> String
-showCmd Cmd {cmd} =
-  cmd
+runCmd :: Text -> IO (Maybe Handle, Maybe Handle, Maybe Handle, ProcessHandle)
+runCmd command =
+  createProcess $ shell $ unpack command
 
-confirm :: [Cmd] -> IO ()
-confirm cmd = do
+confirm :: Recipe -> IO ()
+confirm Recipe {commands} = do
   putStrLn "The following commands will be executed:"
-  mapM_ (putStrLn . showCmd) cmd
+  mapM_ print commands
   putStr "Are you sure you want to run them? [y/n, default: n] "
   hFlush stdout
 
@@ -40,8 +43,17 @@ confirm cmd = do
 
 main :: IO ()
 main = do
-  parsed <- input auto "./foo.dhall"
+  Args recipePath explain <- parseArgs
 
-  confirm parsed
+  let recipeRootDir = takeDirectory $ unpack recipePath
 
-  mapM_ runCmd parsed
+  if recipeRootDir /= "."
+    then do
+      hPutStrLn stderr "ERROR: To avoid an issue about relative directory, dotstingray can read only files in the current directory."
+      die $ "  Try `cd " ++ recipeRootDir ++ "` and run the CLI again."
+    else do
+      parsed <- input auto recipePath
+
+      confirm parsed
+
+      mapM_ runCmd $ commands parsed
