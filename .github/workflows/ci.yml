@@ -18,8 +18,8 @@ jobs:
     - uses: actions/checkout@v3
     - uses: haskell/actions/setup@v1
       with:
-        ghc-version: 'recommended'
-        cabal-version: 'recommended'
+        ghc-version: '8.10'
+        cabal-version: '3.6'
 
     - name: Cache
       uses: actions/cache@v3
