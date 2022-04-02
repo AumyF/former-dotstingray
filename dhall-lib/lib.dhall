@@ -1,9 +1,37 @@
-let Recipe = { commands : List Text }
+let foldLeft =
+      https://raw.githubusercontent.com/dhall-lang/dhall-lang/v21.1.0/Prelude/List/foldLeft.dhall
 
-let copy_from_dest =
-      \(arg : { from : Text, dest : Text }) -> "cp ${arg.from} ${arg.dest}"
+let makeArgumentList =
+      \(list : List Text) ->
+        foldLeft Text list Text (\(a : Text) -> \(b : Text) -> a ++ " " ++ b) ""
 
-let copyToHome =
-      \(path : Text) -> copy_from_dest { from = ".${path}", dest = "~${path}" }
+let withArgumentList =
+      \(prefix : Text) -> \(args : List Text) -> prefix ++ makeArgumentList args
 
-in  { Recipe, copy_from_dest, copyToHome }
+let homebrew = withArgumentList "brew install"
+
+let pacman = withArgumentList "sudo pacman -S"
+
+let paru = withArgumentList "paru -S"
+
+let aurMakePkg =
+      \(pkg : Text) ->
+        "git clone https://aur.archlinux.org/${pkg}.git /tmp/dotstingray/${pkg} && cd /tmp/dotstingray/${pkg} && makepkg -si"
+
+in  { useCmd =
+        \(cmd : Text) ->
+          let cmd-to =
+                \(dest : Text) -> \(from : Text) -> "${cmd} ${from} ${dest}"
+
+          in  { fish = cmd-to "~/.config/fish/config.fish"
+              , starship = cmd-to "~/.config/starship.toml"
+              , git = cmd-to "~/.gitconfig"
+              , yabai = cmd-to "~/.yabairc"
+              , skhd = cmd-to "~/.skhdrc"
+              }
+    , Recipe = { commands : List Text }
+    , homebrew
+    , pacman
+    , paru
+    , aurMakePkg
+    }
